@@ -1,0 +1,274 @@
+<h1>CS Major Scale</h1>
+<h2>so underground it's scala </h2>
+<select id = "Key">
+  <option> A </option>
+  <option> B </option>
+  <option selected> C </option>
+  <option> D </option>
+  <option> E </option>
+  <option> F </option>
+</select>
+<select id = "Scale">
+  <option selected>Major</option>
+  <option>Minor</option>
+</select>
+<br>
+<textarea id="Rad_Music" rows="30" cols="50" value="">
+    Because I could not stop for Death –
+    He kindly stopped for me –
+    The Carriage held but just Ourselves –
+    And Immortality.
+
+    We slowly drove – He knew no haste
+    And I had put away
+    My labor and my leisure too,
+    For His Civility –
+
+    We passed the School, where Children strove
+    At Recess – in the Ring –
+    We passed the Fields of Gazing Grain –
+    We passed the Setting Sun –
+
+    Or rather – He passed Us –
+    The Dews drew quivering and Chill –
+    For only Gossamer, my Gown –
+    My Tippet – only Tulle –
+
+    We paused before a House that seemed
+    A Swelling of the Ground –
+    The Roof was scarcely visible –
+    The Cornice – in the Ground –
+
+    Since then – 'tis Centuries – and yet
+    Feels shorter than the Day
+    I first surmised the Horses' Heads
+    Were toward Eternity –
+</textarea>
+<button onClick = "play()">
+	click me
+</button>
+
+<script src="https://tonejs.github.io/build/Tone.js"></script>
+<script src="./text-to-ipa.js"></script>
+<script src="./converter-form.js"></script>
+<script>
+  window.onload = TextToIPA.loadDict('./ipadict.txt');
+</script>
+
+<script>
+  let chromatic = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", 
+                  "F#", "G", "G#"]
+  let Major = [0, 2, 4, 5, 7, 9, 11, 12]
+  let Minor = [0, 2, 3, 5, 7, 8, 10, 12]
+  let vowel_lst = ['i', 'ɪ', 'e', 'ɛ', 'æ', 'ʌ', 'ɔ', 'o', 'u', 'ʊ', 'j', 'a', 'ə']
+  
+  let treble_map = {
+    'i': ["G5", "G#5"],
+    'ɪ': ["F5", "F#5", ],
+    'e': ["D#5", "E5",],
+    'ɛ': ["C#5", "D5",],
+    'æ': ["B5", "C5", ],
+    'ʌ': ["A5", "A#5", ],
+    'ɔ': ["G4", "G#4"],
+    'o': ["F4", "F#4", ],
+    'u': ["D#4", "E4", ],
+    'ʊ': ["C#4", "D4", ],
+    'j': ["B4", "C4", ],
+    'a': ["A4", "A#4", ],
+    'ə': ["G3", "G#3", ]     
+  }
+  
+  let base_map = {
+    'i': ["F4", "F#4", "G4", "G#4"],
+    'ɪ': ["C#4", "D4", "D#4", "E4"],
+    'e': ["A4", "A#4", "B4", "C4"],
+    'ɛ': ["F3", "F#3", "G3", "G#3"],
+    'æ': ["C#3", "D3", "D#3", "E3"],
+    'ʌ': ["A3", "A#3", "B3", "C3"],
+    'ɔ': ["F2", "F#2", "G2", "G#2"],
+    'o': ["C#2", "D2", "D#2", "E2"],
+    'u': ["A2", "A#2", "B2", "C2"],
+    'ʊ': ["F1", "F#1", "G1", "G#1"],
+    'j': ["C#1", "D1", "D#1", "E1"],
+    'a': ["A1", "A#1", "B1", "C1"],
+    'ə': ["A1", "A#1", "B1", "C1"],             
+  }
+</script>
+                             
+<script>
+  function genScale(key, scale) {
+    	// if (/.b/.match(key)) {
+    	// key = key[0] + ""
+    	// }
+    
+			let i = chromatic.indexOf(key)
+      
+      lst = []
+
+      for (const e of eval(scale)) {
+          lst.push(chromatic[(i + e) % 12] + 
+                  parseInt(((i + e) / 12) + 1).toString())
+        }
+
+      for(let k = 2; k < 8; k++){
+        for (const e of eval(scale).slice(start=1)) {
+          lst.push(chromatic[(i + e) % 12] + 
+                  parseInt(((i + e) / 12) + k).toString())
+        }
+      }
+      
+      return lst
+  }
+
+  function get_text(){
+    return ConverterForm.convert("Rad_Music")
+  }
+
+  function map_vowels(input){
+    out = []
+    for(let i of input){
+        if(vowel_lst.includes(i)){
+            out.push(i)
+        }  
+    }
+    return out
+  }
+
+const gain = new Tone.Gain(4).toDestination();
+const reverb = new Tone.Reverb().connect(gain);
+const synth1 = new Tone.FMSynth().connect(reverb);
+
+const piano = new Tone.Sampler({
+  urls: {'A7': './piano/A7.[mp3|ogg]',
+    'A1': './piano/A1.[mp3|ogg]',
+    'A2': './piano/A2.[mp3|ogg]',
+    'A3': './piano/A3.[mp3|ogg]',
+    'A4': './piano/A4.[mp3|ogg]',
+    'A5': './piano/A5.[mp3|ogg]',
+    'A6': './piano/A6.[mp3|ogg]',
+    'A#7': './piano/As7.[mp3|ogg]',
+    'A#1': './piano/As1.[mp3|ogg]',
+    'A#2': './piano/As2.[mp3|ogg]',
+    'A#3': './piano/As3.[mp3|ogg]',
+    'A#4': './piano/As4.[mp3|ogg]',
+    'A#5': './piano/As5.[mp3|ogg]',
+    'A#6': './piano/As6.[mp3|ogg]',
+    'B7': './piano/B7.[mp3|ogg]',
+    'B1': './piano/B1.[mp3|ogg]',
+    'B2': './piano/B2.[mp3|ogg]',
+    'B3': './piano/B3.[mp3|ogg]',
+    'B4': './piano/B4.[mp3|ogg]',
+    'B5': './piano/B5.[mp3|ogg]',
+    'B6': './piano/B6.[mp3|ogg]',
+    'C7': './piano/C7.[mp3|ogg]',
+    'C1': './piano/C1.[mp3|ogg]',
+    'C2': './piano/C2.[mp3|ogg]',
+    'C3': './piano/C3.[mp3|ogg]',
+    'C4': './piano/C4.[mp3|ogg]',
+    'C5': './piano/C5.[mp3|ogg]',
+    'C6': './piano/C6.[mp3|ogg]',
+    'C7': './piano/C7.[mp3|ogg]',
+    'C#7': './piano/Cs7.[mp3|ogg]',
+    'C#1': './piano/Cs1.[mp3|ogg]',
+    'C#2': './piano/Cs2.[mp3|ogg]',
+    'C#3': './piano/Cs3.[mp3|ogg]',
+    'C#4': './piano/Cs4.[mp3|ogg]',
+    'C#5': './piano/Cs5.[mp3|ogg]',
+    'C#6': './piano/Cs6.[mp3|ogg]',
+    'D7': './piano/D7.[mp3|ogg]',
+    'D1': './piano/D1.[mp3|ogg]',
+    'D2': './piano/D2.[mp3|ogg]',
+    'D3': './piano/D3.[mp3|ogg]',
+    'D4': './piano/D4.[mp3|ogg]',
+    'D5': './piano/D5.[mp3|ogg]',
+    'D6': './piano/D6.[mp3|ogg]',
+    'D#7': './piano/Ds7.[mp3|ogg]',
+    'D#1': './piano/Ds1.[mp3|ogg]',
+    'D#2': './piano/Ds2.[mp3|ogg]',
+    'D#3': './piano/Ds3.[mp3|ogg]',
+    'D#4': './piano/Ds4.[mp3|ogg]',
+    'D#5': './piano/Ds5.[mp3|ogg]',
+    'D#6': './piano/Ds6.[mp3|ogg]',
+    'E7': './piano/E7.[mp3|ogg]',
+    'E1': './piano/E1.[mp3|ogg]',
+    'E2': './piano/E2.[mp3|ogg]',
+    'E3': './piano/E3.[mp3|ogg]',
+    'E4': './piano/E4.[mp3|ogg]',
+    'E5': './piano/E5.[mp3|ogg]',
+    'E6': './piano/E6.[mp3|ogg]',
+    'F7': './piano/F7.[mp3|ogg]',
+    'F1': './piano/F1.[mp3|ogg]',
+    'F2': './piano/F2.[mp3|ogg]',
+    'F3': './piano/F3.[mp3|ogg]',
+    'F4': './piano/F4.[mp3|ogg]',
+    'F5': './piano/F5.[mp3|ogg]',
+    'F6': './piano/F6.[mp3|ogg]',
+    'F#7': './piano/Fs7.[mp3|ogg]',
+    'F#1': './piano/Fs1.[mp3|ogg]',
+    'F#2': './piano/Fs2.[mp3|ogg]',
+    'F#3': './piano/Fs3.[mp3|ogg]',
+    'F#4': './piano/Fs4.[mp3|ogg]',
+    'F#5': './piano/Fs5.[mp3|ogg]',
+    'F#6': './piano/Fs6.[mp3|ogg]',
+    'G7': './piano/G7.[mp3|ogg]',
+    'G1': './piano/G1.[mp3|ogg]',
+    'G2': './piano/G2.[mp3|ogg]',
+    'G3': './piano/G3.[mp3|ogg]',
+    'G4': './piano/G4.[mp3|ogg]',
+    'G5': './piano/G5.[mp3|ogg]',
+    'G6': './piano/G6.[mp3|ogg]',
+    'G#7': './piano/Gs7.[mp3|ogg]',
+    'G#1': './piano/Gs1.[mp3|ogg]',
+    'G#2': './piano/Gs2.[mp3|ogg]',
+    'G#3': './piano/Gs3.[mp3|ogg]',
+    'G#4': './piano/Gs4.[mp3|ogg]',
+    'G#5': './piano/Gs5.[mp3|ogg]',
+    'G#6': './piano/Gs6.[mp3|ogg]'
+  }, 
+}).toDestination();
+
+const kick = new Tone.MembraneSynth().toDestination();
+
+function play_map(mapeeds, scale){
+  let time1 = Tone.now();
+  let time2 = Tone.now();
+
+  for(const [i, val] of map.entries()){
+    let intersect1 = base_map[val].filter(value => scale.includes(value));
+    let ind1 = Math.floor(Math.random()*(intersect1.length))
+    let key1 = intersect1[ind1]
+    let i1 = scale.indexOf(key1)
+
+    if(i % 4 == 0) {
+      let intersect2 = treble_map[val].filter(value => scale.includes(value));
+      let ind2 = Math.floor(Math.random()*(intersect2.length))
+      let key2 = intersect2[ind2]
+      let i2 = scale.indexOf(key2)
+      
+      Tone.Transport.schedule((time1) => {
+        piano.triggerAttackRelease(key2, "2n");
+        piano.triggerAttackRelease(scale[i2+2], "1n");
+        piano.triggerAttackRelease(scale[i2+4], "1n");
+      }, time1);
+    }
+
+    Tone.Transport.schedule((time2) => {
+      synth1.triggerAttackRelease(key1, "8n");
+    }, time2);
+    
+    time1 += Tone.Time("8n");
+    time2 += Tone.Time("8n");
+  }
+}
+
+function play(){
+  scale = genScale(document.getElementById("Key").value, document.getElementById("Scale").value)
+  console.log(scale)
+  IPA = get_text()
+  map = map_vowels(IPA)
+  play_map(map, scale)
+  Tone.Transport.start();
+  Tone.start();
+}
+
+</script>
