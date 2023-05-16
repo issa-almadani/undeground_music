@@ -60,11 +60,11 @@
                   "F#", "G", "G#"]
   let Major = [0, 2, 4, 5, 7, 9, 11, 12]
   let Minor = [0, 2, 3, 5, 7, 8, 10, 12]
-  let vowel_lst = ['i', 'ɪ', 'e', 'ɛ', 'æ', 'ʌ', 'ɔ', 'o', 'u', 'ʊ', 'j', 'a', 'ə']
+  let vowel_lst = ['i', 'ɪ', 'e', 'ɛ', 'æ', 'ʌ', 'ɔ', 'o', 'u', 'ʊ', 'j', 'a', 'ɑ', 'ə']
   
   let treble_map = {
     'i': ["G5", "G#5"],
-    'ɪ': ["F5", "F#5", ],
+    'ɪ': ["F5", "F#5"],
     'e': ["D#5", "E5",],
     'ɛ': ["C#5", "D5",],
     'æ': ["B5", "C5", ],
@@ -75,6 +75,7 @@
     'ʊ': ["C#4", "D4", ],
     'j': ["B4", "C4", ],
     'a': ["A4", "A#4", ],
+    'ɑ': ["A4", "A#4", ],
     'ə': ["G3", "G#3", ]     
   }
   
@@ -91,11 +92,13 @@
     'ʊ': ["F1", "F#1", "G1", "G#1"],
     'j': ["C#1", "D1", "D#1", "E1"],
     'a': ["A1", "A#1", "B1", "C1"],
+    'ɑ': ["A1", "A#1", "B1", "C1"],
     'ə': ["A1", "A#1", "B1", "C1"],             
   }
 </script>
                              
 <script>
+  // GENERATE GIVEN SCALE
   function genScale(key, scale) {
     	// if (/.b/.match(key)) {
     	// key = key[0] + ""
@@ -125,19 +128,45 @@
   }
 
   function map_vowels(input){
-    out = []
+    vowels = []
+    strengths = []
+    speeds = []
+
+    vowel_length = 0
+
+    word_start = false
+
     for(let i of input){
+      console.log(i, word_start)
+        if(i == ' ' && word_start){
+          word_start = false
+          console.log(vowel_length)
+          for(let j = 1; j <= vowel_length; j++){
+              speeds.push((vowel_length + 1).toString() + "n")
+          }
+
+          vowel_length = 0
+        }
+
+        if(i != ' '){
+          word_start = true
+        }
+
         if(vowel_lst.includes(i)){
-            out.push(i)
-        }  
+            vowels.push(i)
+            vowel_length += 1
+        } 
     }
-    return out
+    return [vowels, strengths, speeds]
   }
 
-const gain = new Tone.Gain(4).toDestination();
-const reverb = new Tone.Reverb().connect(gain);
+
+
+// INSTRUMENT NODES
+const reverb = new Tone.Reverb().toDestination();
 const synth1 = new Tone.FMSynth().connect(reverb);
 
+const forte = new Tone.Gain(0.5).toDestination();
 const piano = new Tone.Sampler({
   urls: {'A7': './piano/A7.[mp3|ogg]',
     'A1': './piano/A1.[mp3|ogg]',
@@ -225,11 +254,11 @@ const piano = new Tone.Sampler({
     'G#5': './piano/Gs5.[mp3|ogg]',
     'G#6': './piano/Gs6.[mp3|ogg]'
   }, 
-}).toDestination();
+}).connect(reverb);
 
-const kick = new Tone.MembraneSynth().toDestination();
 
-function play_map(mapeeds, scale){
+// PLAY MUSIC
+function play_map(map, strengths, speeds, scale){
   let time1 = Tone.now();
   let time2 = Tone.now();
 
@@ -239,25 +268,25 @@ function play_map(mapeeds, scale){
     let key1 = intersect1[ind1]
     let i1 = scale.indexOf(key1)
 
-    if(i % 4 == 0) {
-      let intersect2 = treble_map[val].filter(value => scale.includes(value));
-      let ind2 = Math.floor(Math.random()*(intersect2.length))
-      let key2 = intersect2[ind2]
-      let i2 = scale.indexOf(key2)
-      
-      Tone.Transport.schedule((time1) => {
-        piano.triggerAttackRelease(key2, "2n");
-        piano.triggerAttackRelease(scale[i2+2], "1n");
-        piano.triggerAttackRelease(scale[i2+4], "1n");
-      }, time1);
-    }
+    let intersect2 = treble_map[val].filter(value => scale.includes(value));
+    let ind2 = Math.floor(Math.random()*(intersect2.length))
+    let key2 = intersect2[ind2]
+    let i2 = scale.indexOf(key2)
 
-    Tone.Transport.schedule((time2) => {
-      synth1.triggerAttackRelease(key1, "8n");
-    }, time2);
+
+    Tone.Transport.schedule((time1) => {
+      piano.triggerAttackRelease(key2, speeds[i]);
+      piano.triggerAttackRelease(scale[i2+2], speeds[i]);
+      piano.triggerAttackRelease(scale[i2+4], speeds[i]);
+    }, time1);
+
+
+    // Tone.Transport.schedule((time2) => {
+    //   synth1.triggerAttackRelease(key1, speeds[i]);
+    // }, time2);
     
-    time1 += Tone.Time("8n");
-    time2 += Tone.Time("8n");
+    time1 += Tone.Time(speeds[i]);
+    time2 += Tone.Time(speeds[i]);
   }
 }
 
@@ -266,7 +295,7 @@ function play(){
   console.log(scale)
   IPA = get_text()
   map = map_vowels(IPA)
-  play_map(map, scale)
+  play_map(map[0], map[1], map[2], scale)
   Tone.Transport.start();
   Tone.start();
 }
