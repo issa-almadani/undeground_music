@@ -1,0 +1,73 @@
+<h1>Spectacular Net Art</h1>
+<h2>by issa</h2>
+
+<input id = "up_to" type="number" value = 13>
+<input id = "start" type="number" value = 440>
+
+<button onclick = "makeInstrument()">
+	Generate Instrument
+</button>
+
+<div id="instrument"></div>
+
+<script src="https://tonejs.github.io/build/Tone.js"></script>
+
+<script>
+  function gen(){
+  	let up_to = parseInt(document.getElementById("up_to").value);
+  	let start = parseInt(document.getElementById("start").value);
+    let out = [];
+    
+    let prev = start;
+    
+    out[0] = start;
+    out[1] = start*2;
+    	
+    for(let i = 0; i < up_to - 2; i++){
+      prev = prev*3/2;
+      if(prev > 2*start) {
+        prev /= 2;
+      }
+      
+      let index = 0;
+      
+      for(let j = 0; j < up_to; j++){
+        if(prev > out[j]){}
+        else {
+          index = j;
+          break;
+        }
+      }
+      	
+      out.splice(index, 0, prev);
+    }
+    return out
+  }
+  
+  function makeInstrument(){
+    let instrument = document.getElementById("instrument");
+    
+ 	 	const synth = new Tone.Synth().toDestination();
+  	Tone.Transport.start();
+    
+  	for(let [i, val] of gen().entries()){
+      let note = document.createElement("button");
+      
+      note.innerText = String.fromCharCode(i + 65);
+      
+      note.addEventListener('click', function(){
+          synth.triggerAttackRelease(val, "8n");
+      });
+      
+      note.addEventListener('keypress', function(event){
+        if (event.key === String.fromCharCode(i + 97) || event.key === String.fromCharCode(i + 65)) {
+        synth.triggerAttackRelease(val, "8n");
+        }
+      });
+      
+      instrument.appendChild(note)
+    }
+    let br = document.createElement("br");
+    instrument.appendChild(br);
+  }
+</script>
