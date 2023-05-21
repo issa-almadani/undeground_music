@@ -1,34 +1,89 @@
-<h1>Spectacular Net Art</h1>
-<h2>by issa</h2>
+<h1>Pythagorean Generator</h1>
+<h2>Issa Almadani</h2>
 
-<input id = "up_to" type="number" value = 13>
-<input id = "start" type="number" value = 440>
+<!-- CSS STYLES USED TO CONTROL IF BUTTON IS PLAYABLE / IS PLAYING -->
+<style>
+    .color-change {
+      background-color: blue;
+      transition: background-color 0.3s;
+    }
+    .not-playable {
+      background-color:  red;
+      transition: background-color 0.3s;
+    }
+    .button {
+      display: inline-block;
+      padding: 15px 25px;
+      font-size: 24px;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+</style>
 
-<button onclick = "makeInstrument()">
+<!-- INPUT START VALUES TO GENERATE A SCALE FROM -->
+<!-- DEFAULT = 13 KEYS (chromatic scale), START = 440 HZ (note: A4)-->
+<label>Key Count:</label><input id = "up_to" type="number" value = 13><br><br>
+<label>Start Frequency:</label><input id = "start" type="number" value = 440><br><br>
+
+<button onclick = "makeInstrument(num_instruments)">
 	Generate Instrument
 </button>
 
+<p>
+    How To Use: <br>
+    <ol>
+      <li> To generate a new pythagorean-tuned instrument, input starting frequency (default: A4 / 440Hz), and key count (default: Chromatic / 13 keys) </li>
+      <li> To play your new instrument, press the key on your keyboard corresponding to the key on the button </li>
+      <li> You can make instruments of any size and any frequency, but any instruments with more than 26 keys, and too high/too low of a frequency might not produce desirable results (do at your own risk) </li>
+      <li> You can make and stack multiple instruments over each other with different key numbers and starting frequencies (having more than 10 instruments isn't recommended, but doable) </li>
+      <li> If you would like to disable an instrument, press the number corresponding to it (e.g. press the "1" key to disable the first instrument)</li>
+      <li> To reenable an instrument, just press the number key again corresponding to it </li>
+      <li> If you would like to disable certain keys in your instrument, click on those keys and they will turn to red to signify they are disabled </li>
+      <li> Click them again to reenable them </li>
+      <li> Enjoy messing around and combining various pythogorean instruments and frequencies together! </li>
+    </ol>
+</p>
+
+<!-- CONTAINER TO HOLD INSTRUMENT -->
 <div id="instrument"></div>
 
+<!-- IMPORTS: TONE.JS -->
 <script src="https://tonejs.github.io/build/Tone.js"></script>
 
 <script>
+  // FUNCTION TO CALCULATE FREQUENCY OF INPUTTED SCALE
   function gen(){
+    // GET STARTING VALUES
   	let up_to = parseInt(document.getElementById("up_to").value);
   	let start = parseInt(document.getElementById("start").value);
+
+    // INITIALIZE OUTPUT ARRAY
     let out = [];
     
     let prev = start;
     
+    // ADD START AND 2*START AS INITIAL FREQUENCIES
     out[0] = start;
     out[1] = start*2;
     	
+    // KEEP CONTINUING TO ADD FREQUENCIES UNTIL
+    // LENGTH OF ARRAY REACHES "UP_TO" (i.e. 
+    // NO. OF KEYS IN SCALE)
+    // BASICALLY PERFORMING PYTHAGOREAN TUNING ALGORITHM
     for(let i = 0; i < up_to - 2; i++){
+      // MULTIPLY PREV FREQUENCY BY 3/2
       prev = prev*3/2;
+      // IF GREATER THAN 2*START,
+      // DIVIDE BY 2 TO RETURN TO ORIGNAL SCALE
       if(prev > 2*start) {
         prev /= 2;
       }
       
+      // SECOND LOOP FINDS THE POSITION
+      // OF THE KEY IN THE ARRAY 
+      // AND APPENDS IT AT THAT INDEX
       let index = 0;
       
       for(let j = 0; j < up_to; j++){
@@ -38,36 +93,98 @@
           break;
         }
       }
-      	
       out.splice(index, 0, prev);
     }
+
     return out
   }
-  
-  function makeInstrument(){
+
+  // GLOBAL VARIABLE THAT STORES ALL PRESSED KEYS
+  // AND NUM_INSTRUMENTS
+  let pressedKeys = {};
+  let num_instruments = 1
+
+  // ADDS PRESSED KEYS TO PRESSEDKEYS OBJECT
+  // MAIN FUNCTION IS TO RECORD WHICH NUMBER KEYS
+  // ARE PRESSED TO ENSURE THAT THE CORRESPONDING
+  // INSTRUMENTS ARE ACTIVATED ON CLICK, AND 
+  // SUBSEQUENTLY DEACTIVATED ON THE NEXT CLICK.
+  window.addEventListener('keydown', function(event) {
+    pressedKeys[event.key] = !pressedKeys[event.key];
+  });
+
+  // FUNCTION TO MAKE INSTRUMENT
+  function makeInstrument(counter){
+    // SET INSTRUMENT AS INITIALLY ACTIVE
+    pressedKeys[num_instruments.toString()] = true;
+
+    // GET CONTAINER TO APPEND INSTRUMENT TO
     let instrument = document.getElementById("instrument");
     
- 	 	const synth = new Tone.Synth().toDestination();
-  	Tone.Transport.start();
+    // CREATE NEW POLYSYNTH FOR INSTRUMENT
+ 	 	const synth = new Tone.PolySynth().toDestination();
     
+    // ADDS A NEW BUTTON FOR EACH KEY IN SCALE
+    // EACH BUTTON IS LABELLED AS A NEW LETTER IN
+    // THE ALPHABET
   	for(let [i, val] of gen().entries()){
       let note = document.createElement("button");
       
+      // GIVE BUTTON LABEL BY GETTING THE NEXT
+      // LETTER IN THE ALPHABET
       note.innerText = String.fromCharCode(i + 65);
-      
+
+      // SET NOTE AS BEING PLAYABLE
+      note.playable = true;
+      note.classList.add('button')
+
+      // IF BUTTON IS CLICK
+      // NOTE IS DEACTIVATED 
+      // OR REACTIVATED
       note.addEventListener('click', function(){
-          synth.triggerAttackRelease(val, "8n");
-      });
-      
-      note.addEventListener('keypress', function(event){
-        if (event.key === String.fromCharCode(i + 97) || event.key === String.fromCharCode(i + 65)) {
-        synth.triggerAttackRelease(val, "8n");
+        if (note.playable) {
+          note.playable = false;
+          note.classList.add("not-playable");
+        } else {
+          note.playable = true
+          note.classList.remove("not-playable");
         }
       });
       
+      // IF KEY CORRESPONDING TO BUTTON IS PRESSED
+      // THEN BUTTON IS PLAYED
+      window.addEventListener('keydown', function(event){
+        // CHECKS IF LOWER-CASE OR UPPER-CASE LETTER IS PRESSED
+        if (event.key == String.fromCharCode(i + 97) || event.key == String.fromCharCode(i + 65)) {
+          
+            // CHECKS IF INSTRUMENT IS ACTIVE
+            if (pressedKeys[counter] == false) {
+              return
+            }
+
+            // CHECKS IF NOTE IS PLAYABLE
+            if (note.playable == false) {
+              return
+            }
+
+            note.classList.add("color-change");
+
+            setTimeout(function() {
+                note.classList.remove("color-change");
+            }, 1000);
+
+            synth.triggerAttackRelease(val, "8n");
+        }
+      }
+      );
+      
       instrument.appendChild(note)
+      
     }
+    // LINE BREAK TO SEPERATE INSTRUMENTS ON PAGE
     let br = document.createElement("br");
     instrument.appendChild(br);
+    num_instruments += 1
   }
 </script>
+
